@@ -1,4 +1,4 @@
-package tn.entreprise.escproject.services;
+package tn.entreprise.escproject.services.Interfaces;
 
 import java.util.List;
 
