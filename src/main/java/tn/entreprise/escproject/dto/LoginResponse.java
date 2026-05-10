@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginResponse {
-    
+
     private String token;
     private String type = "Bearer";
     private Long id;
@@ -18,7 +18,7 @@ public class LoginResponse {
     private String firstName;
     private String lastName;
     private String roleUser;
-    
+
     public LoginResponse(String token, Long id, String email, String firstName, String lastName, String roleUser) {
         this.token = token;
         this.id = id;

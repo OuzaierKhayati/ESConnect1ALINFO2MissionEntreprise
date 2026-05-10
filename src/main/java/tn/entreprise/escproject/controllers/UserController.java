@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import tn.entreprise.escproject.dto.ApiResponse;
 import tn.entreprise.escproject.dto.LoginRequest;
 import tn.entreprise.escproject.dto.LoginResponse;
+import tn.entreprise.escproject.dto.RegisterRequest;
 import tn.entreprise.escproject.dto.UserResponse;
 import tn.entreprise.escproject.entite.User;
+import tn.entreprise.escproject.exception.ResourceNotFoundException;
 import tn.entreprise.escproject.services.UserServiceImp;
 
 @RestController
@@ -26,79 +29,72 @@ import tn.entreprise.escproject.services.UserServiceImp;
 public class UserController {
 
     @Autowired
-    UserServiceImp userServiceImp;
+    private UserServiceImp userServiceImp;
 
-    /**
-     * Register a new user
-     * @param user - User object with credentials
-     * @return ResponseEntity with registered user
-     */
     @PostMapping("/register")
-    public ResponseEntity<User> register(@Valid @RequestBody User user) {
-        try {
-            User registeredUser = userServiceImp.registerUser(user);
-            return ResponseEntity.ok(registeredUser);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
+    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        UserResponse registeredUser = userServiceImp.registerUser(registerRequest);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Registration completed successfully", registeredUser));
     }
 
-    /**
-     * Authenticate user and get JWT token
-     * @param loginRequest - Contains email and password
-     * @return ResponseEntity with token and user info
-     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        try {
-            LoginResponse response = userServiceImp.authenticateUser(loginRequest);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        }
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
+        LoginResponse response = userServiceImp.authenticateUser(loginRequest);
+        return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
-    /**
-     * Get user by ID (requires authentication)
-     * @param id - User ID
-     * @return ResponseEntity with UserResponse (no password)
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
         User user = userServiceImp.getById(id);
-        if (user != null) {
-            return ResponseEntity.ok(userServiceImp.convertToUserResponse(user));
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", userServiceImp.convertToUserResponse(user)));
     }
 
     @PostMapping("/add")
-    public User addUser(@RequestBody User user){
-        return userServiceImp.add(user);
+    public ResponseEntity<ApiResponse<UserResponse>> addUser(@RequestBody User user) {
+        User saved = userServiceImp.add(user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("User created successfully", userServiceImp.convertToUserResponse(saved)));
     }
 
     @PutMapping("/update")
-    public User updateUser(@RequestBody User user) {
-        return userServiceImp.update(user);
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(@RequestBody User user) {
+        User updated = userServiceImp.update(user);
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", userServiceImp.convertToUserResponse(updated)));
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteUser(@PathVariable long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userServiceImp.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
     }
 
     @GetMapping("/getById/{id}")
-    public User getById(@PathVariable long id){
-        return userServiceImp.getById(id);
+    public ResponseEntity<ApiResponse<UserResponse>> getById(@PathVariable Long id) {
+        User user = userServiceImp.getById(id);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+        return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", userServiceImp.convertToUserResponse(user)));
     }
 
     @GetMapping("/getAll")
-    public List<User> getAll(){
-        return userServiceImp.getAll();
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAll() {
+        List<UserResponse> users = userServiceImp.getAll().stream()
+                .map(userServiceImp::convertToUserResponse)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users));
     }
 
     @PostMapping("/addAll")
-    public List<User> addAll(@RequestBody List<User> users){
-        return userServiceImp.addAll(users);
+    public ResponseEntity<ApiResponse<List<UserResponse>>> addAll(@RequestBody List<User> users) {
+        List<UserResponse> savedUsers = userServiceImp.addAll(users).stream()
+                .map(userServiceImp::convertToUserResponse)
+                .toList();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Users created successfully", savedUsers));
     }
 }

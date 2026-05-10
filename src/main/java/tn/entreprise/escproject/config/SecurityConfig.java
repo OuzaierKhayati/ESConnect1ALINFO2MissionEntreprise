@@ -28,10 +28,7 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
     
-    /**
-     * Configure password encoder using BCrypt
-     * @return BCryptPasswordEncoder bean
-     */
+    /**Configure password encoder using BCrypt @return BCryptPasswordEncoder bean*/
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -42,7 +39,6 @@ public class SecurityConfig {
      * Used for manual authentication in login endpoint
      * @param config - AuthenticationConfiguration
      * @return AuthenticationManager bean
-     * @throws Exception
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -73,7 +69,6 @@ public class SecurityConfig {
      * Defines which endpoints are public and which are protected
      * @param http - HttpSecurity object
      * @return SecurityFilterChain bean
-     * @throws Exception
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -98,6 +93,7 @@ public class SecurityConfig {
                         // .requestMatchers(HttpMethod.POST, "/application/**").hasRole("STUDENT")
 
                         // Protected endpoints - require ROLE_ADMIN
+                        .requestMatchers("/user/admin/**").hasRole("ADMIN")
                         // .requestMatchers("/admin/**").hasRole("ADMIN")
                         
                         // Protected endpoints - any authenticated user
@@ -111,12 +107,12 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setContentType("application/json;charset=UTF-8");
                             response.setStatus(401);
-                            response.getWriter().write("{\"message\":\"Unauthorized: " + authException.getMessage() + "\"}");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Unauthorized access. Please log in.\"}");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setContentType("application/json;charset=UTF-8");
                             response.setStatus(403);
-                            response.getWriter().write("{\"message\":\"Forbidden: " + accessDeniedException.getMessage() + "\"}");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Access denied. You do not have permission to access this resource.\"}");
                         })
                 );
         

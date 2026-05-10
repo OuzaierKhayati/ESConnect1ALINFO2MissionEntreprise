@@ -11,6 +11,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,17 +31,18 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NonNull
+    @Email
+    @Column(unique = true)
     private String email;
 
     @NonNull
     @Column(unique=true, nullable = false)
     private String password;
 
-    @NonNull
+    @NotBlank
     private String firstName;
 
-    @NonNull
+    @NotBlank
     private String lastName;
 
     @JsonFormat(pattern = "MM/dd/yyyy")
@@ -49,11 +52,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private RoleUser roleUser;
 
-    // Recruiter → JobOffers
-    // @OneToMany(mappedBy = "recruiter")
-    // private List<JobOffer> jobOffers;
-
-    // Student → Applications
-    // @OneToMany(mappedBy = "student")
-    // private List<Application> applications;
+    @NonNull
+    @Enumerated(EnumType.STRING)
+    private UserStatus userStatus;
 }

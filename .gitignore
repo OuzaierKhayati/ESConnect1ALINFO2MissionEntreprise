@@ -1,4 +1,5 @@
 HELP.md
+BACKEND_TECHNICAL_REPORT.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
