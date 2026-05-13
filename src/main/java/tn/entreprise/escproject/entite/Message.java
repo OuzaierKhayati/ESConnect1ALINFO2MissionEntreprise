@@ -9,19 +9,18 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-//@Builder
+@Builder
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-     /* Expéditeur */
-    @ManyToOne
+    //FetchType.LAZY : pour éviter de charger les données de l'utilisateur à chaque fois que nous chargeons un message=> améliorer les performances.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
     private User sender;
 
-    /* Destinataire */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receiver_id")
     private User receiver;
 
@@ -31,4 +30,8 @@ public class Message {
     private LocalDateTime sentAt;
 
     private boolean isRead;
+
+    private String fileUrl;
+
+    private String fileType;
 }

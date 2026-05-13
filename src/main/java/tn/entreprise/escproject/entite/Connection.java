@@ -1,9 +1,7 @@
 package tn.entreprise.escproject.entite;
-
 import jakarta.persistence.*;
 import lombok.*;
 import tn.entreprise.escproject.entite.enums.ConnectionStatus;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,14 +15,11 @@ public class Connection {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-     /* User qui envoie la demande */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
     private User sender;
 
-     /* User qui reçoit la demande     */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receiver_id")
     private User receiver;
 

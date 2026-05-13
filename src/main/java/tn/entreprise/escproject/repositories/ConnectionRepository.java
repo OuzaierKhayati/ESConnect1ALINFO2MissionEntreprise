@@ -6,6 +6,7 @@ import tn.entreprise.escproject.entite.Connection;
 
 import java.util.List;
 
+//verifier lannotation @Repository
 public interface ConnectionRepository
         extends JpaRepository<Connection, Long> {
 
@@ -14,7 +15,7 @@ public interface ConnectionRepository
         WHERE
         (c.sender.id = :userId
         OR c.receiver.id = :userId)
-        AND c.status = 'ACCEPTED'
+        AND c.status = 'ACCEPTED' 
     """)
     List<Connection> findUserConnections(Long userId);
 }
