@@ -1,7 +1,59 @@
+//package tn.entreprise.escproject.entite;
+//
+//import com.fasterxml.jackson.annotation.JsonIgnore;
+//import jakarta.persistence.*;
+//import jakarta.validation.constraints.Email;
+//import jakarta.validation.constraints.NotBlank;
+//import lombok.*;
+//
+//import java.util.List;
+//
+//@Entity
+//@Getter
+//@Setter
+//@NoArgsConstructor
+//@AllArgsConstructor
+//@Builder
+//@Table(name = "users")
+//public class User {
+//
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    private Long id;
+//
+//    @NotBlank
+//    private String firstName;
+//
+//    @NotBlank
+//    private String lastName;
+//
+//    @Email
+//    @Column(unique = true)
+//    private String email;
+//
+//    @NotBlank
+//    private String password;
+//
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "sender")
+//    private List<Connection> sentConnections;
+//
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "receiver")
+//    private List<Connection> receivedConnections;
+//
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "sender")
+//    private List<Message> sentMessages;
+//
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "receiver")
+//    private List<Message> receivedMessages;
+//}
+
 package tn.entreprise.escproject.entite;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -12,7 +64,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -22,13 +75,17 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Entity
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,8 +94,8 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @NonNull
-    @Column(unique=true, nullable = false)
+    @NotBlank
+    @Column(unique = true, nullable = false)
     private String password;
 
     @NotBlank
@@ -65,4 +122,20 @@ public class User {
     // Student → Applications
     @OneToMany(mappedBy = "student")
     private List<Application> applications;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "sender")
+    private List<Connection> sentConnections;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "receiver")
+    private List<Connection> receivedConnections;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "sender")
+    private List<Message> sentMessages;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "receiver")
+    private List<Message> receivedMessages;
 }

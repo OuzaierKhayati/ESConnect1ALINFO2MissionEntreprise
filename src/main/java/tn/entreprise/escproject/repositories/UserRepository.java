@@ -1,13 +1,14 @@
 package tn.entreprise.escproject.repositories;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+
 import tn.entreprise.escproject.entite.RoleUser;
 import tn.entreprise.escproject.entite.User;
 import tn.entreprise.escproject.entite.UserStatus;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {

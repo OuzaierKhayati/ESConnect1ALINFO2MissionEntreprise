@@ -101,10 +101,21 @@ public class SecurityConfig {
                         // .requestMatchers("/admin/**").hasRole("ADMIN")
                         
                         // Protected endpoints - any authenticated user
-                        .requestMatchers(HttpMethod.GET, "/**").authenticated()
+                        // .requestMatchers(HttpMethod.GET, "/**").authenticated()
+
+                        // Allow messages and connections
+                        .requestMatchers(HttpMethod.POST, "/messages/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/messages/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/messages/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/messages/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/connections/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/connections/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/connections/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/connections/**").permitAll()
                         
                         // All other requests require authentication
-                        .anyRequest().authenticated()
+                         .anyRequest().authenticated()
+//                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
