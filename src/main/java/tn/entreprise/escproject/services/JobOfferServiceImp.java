@@ -139,6 +139,16 @@ public class JobOfferServiceImp implements IService<JobOffer>, IJobOfferService 
         return jobs.stream().map(j -> toResponse(j, currentUserId)).collect(Collectors.toList());
     }
 
+    public List<JobOfferResponse> getMyJobs(Long recruiterId) {
+        User recruiter = userRepository.findById(recruiterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recruiter not found"));
+        if (recruiter.getRoleUser() != RoleUser.RECRUITER) {
+            throw new UnauthorizedException("Only recruiters can access their own job posts");
+        }
+        List<JobOffer> jobs = jobOfferRepository.findByRecruiterOrderByCreatedAtDesc(recruiter);
+        return jobs.stream().map(j -> toResponse(j, recruiterId)).collect(Collectors.toList());
+    }
+
     public JobOfferResponse getJobById(Long jobId, Long currentUserId) {
         JobOffer job = findJobOrThrow(jobId);
         return toResponse(job, currentUserId);

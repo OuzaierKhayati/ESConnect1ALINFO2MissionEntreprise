@@ -156,6 +156,8 @@ public class UserServiceImp implements IService<User>, IUserService {
                 user.getRoleUser().toString()
         );
 
+        user.setOnline(true);
+        userRepository.save(user);
         log.info("User logged in successfully: {}", user.getEmail());
 
         return new LoginResponse(
@@ -170,14 +172,24 @@ public class UserServiceImp implements IService<User>, IUserService {
 
     @Override
     public UserResponse convertToUserResponse(User user) {
-        return new UserResponse(
+        UserResponse response = new UserResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getDateOfBirth(),
                 user.getRoleUser().toString(),
-                user.getUserStatus().toString()
+                user.getUserStatus().toString(),
+                user.isOnline()
         );
+        return response;
+    }
+
+    public void setUserOffline(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setOnline(false);
+            userRepository.save(user);
+            log.info("User {} set to offline", email);
+        });
     }
 }

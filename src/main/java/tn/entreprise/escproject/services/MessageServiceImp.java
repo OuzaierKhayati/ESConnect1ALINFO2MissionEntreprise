@@ -265,14 +265,10 @@ public class MessageServiceImp implements IMessageService {
         // NOTIFICATION
         // =====================================================
 
-        NotificationDTO notification =
-                new NotificationDTO(
-
-                        "New message received",
-
-                        savedMessage.getSender()
-                                .getFirstName()
-                );
+        NotificationDTO notification = NotificationDTO.builder()
+                .message("New message received from " + savedMessage.getSender().getFirstName())
+                .type("MESSAGE")
+                .build();
 
         messagingTemplate.convertAndSend(
 

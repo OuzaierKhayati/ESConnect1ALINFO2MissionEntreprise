@@ -88,6 +88,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/jobs").hasRole("RECRUITER")
                         .requestMatchers(HttpMethod.PUT, "/jobs/**").hasRole("RECRUITER")
                         .requestMatchers(HttpMethod.DELETE, "/jobs/**").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.GET, "/jobs/my").hasRole("RECRUITER")
                         .requestMatchers(HttpMethod.GET, "/applications/job/**").hasRole("RECRUITER")
                         .requestMatchers(HttpMethod.PUT, "/applications/*/status").hasRole("RECRUITER")
                         
@@ -102,6 +103,9 @@ public class SecurityConfig {
                         
                         // Protected endpoints - any authenticated user
                         // .requestMatchers(HttpMethod.GET, "/**").authenticated()
+
+                        // Notifications — any authenticated user
+                        .requestMatchers("/notifications/**").authenticated()
 
                         // Allow messages and connections
                         .requestMatchers(HttpMethod.POST, "/messages/**").permitAll()

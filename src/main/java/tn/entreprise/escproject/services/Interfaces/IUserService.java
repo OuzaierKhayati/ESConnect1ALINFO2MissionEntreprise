@@ -10,4 +10,5 @@ public interface IUserService {
     UserResponse registerUser(RegisterRequest registerRequest);
     LoginResponse authenticateUser(LoginRequest loginRequest);
     UserResponse convertToUserResponse(User user);
+    void setUserOffline(String email);
 }

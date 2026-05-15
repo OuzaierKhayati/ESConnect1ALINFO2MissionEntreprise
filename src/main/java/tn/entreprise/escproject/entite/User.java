@@ -115,6 +115,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus userStatus;
 
+    private boolean online = false;
+
     // Recruiter → JobOffers
     @OneToMany(mappedBy = "recruiter")
     private List<JobOffer> jobOffers;

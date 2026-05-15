@@ -20,4 +20,5 @@ public class UserResponse {
     private LocalDate dateOfBirth;
     private String roleUser;
     private String userStatus;
+    private boolean online;
 }

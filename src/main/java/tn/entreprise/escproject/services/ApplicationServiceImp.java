@@ -16,6 +16,7 @@ import tn.entreprise.escproject.repositories.JobOfferRepository;
 import tn.entreprise.escproject.repositories.UserRepository;
 import tn.entreprise.escproject.services.Interfaces.IApplicationService;
 import tn.entreprise.escproject.services.Interfaces.IService;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +35,10 @@ public class ApplicationServiceImp implements IService<Application>, IApplicatio
 
     @Autowired
     private UserRepository userRepository;
+
+    @Lazy
+    @Autowired
+    private NotificationServiceImp notificationService;
 
     // ======== IService CRUD (kept for backward compat) ========
 
@@ -87,6 +92,8 @@ public class ApplicationServiceImp implements IService<Application>, IApplicatio
         applicationRepository.save(application);
         log.info("Student {} applied to job {}", studentId, jobId);
 
+        notificationService.notifyRecruiterNewApplication(job.getRecruiter(), student, job, application);
+
         return toResponse(application);
     }
 
@@ -129,6 +136,8 @@ public class ApplicationServiceImp implements IService<Application>, IApplicatio
         application.setStatus(newStatus);
         applicationRepository.save(application);
         log.info("Application {} status updated to {} by recruiter {}", applicationId, status, recruiterId);
+
+        notificationService.notifyStudentStatusChanged(application.getStudent(), application.getJobOffer(), application);
 
         return toResponse(application);
     }

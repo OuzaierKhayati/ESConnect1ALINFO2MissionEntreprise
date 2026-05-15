@@ -72,6 +72,14 @@ public class JobOfferController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Jobs retrieved successfully", jobs));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<JobOfferResponse>>> getMyJobs(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = getCurrentUser(userDetails);
+        List<JobOfferResponse> jobs = jobOfferService.getMyJobs(user.getId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Your job posts retrieved successfully", jobs));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<JobOfferResponse>> getJobById(
             @PathVariable Long id,
