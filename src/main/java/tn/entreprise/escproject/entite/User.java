@@ -94,9 +94,14 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @NotBlank
-    @Column(unique = true, nullable = false)
+    @Column(nullable = true)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    private String providerId;
 
     @NotBlank
     private String firstName;
