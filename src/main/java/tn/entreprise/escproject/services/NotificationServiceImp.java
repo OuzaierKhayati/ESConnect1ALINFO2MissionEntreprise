@@ -116,7 +116,9 @@ public class NotificationServiceImp implements INotificationService {
 
     private void pushToUser(String email, NotificationDTO dto) {
         try {
+            log.info("Pushing real-time notification to user: {} | type: {} | message: {}", email, dto.getType(), dto.getMessage());
             messagingTemplate.convertAndSendToUser(email, "/queue/notifications", dto);
+            log.info("Successfully pushed notification to user: {}", email);
         } catch (Exception e) {
             log.warn("Failed to push real-time notification to {}: {}", email, e.getMessage());
         }
