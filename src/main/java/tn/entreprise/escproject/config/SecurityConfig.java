@@ -92,6 +92,8 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
                         .requestMatchers("/chat/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/files/**").permitAll()
                         
                         // Protected endpoints - require ROLE_RECRUITER
                         .requestMatchers(HttpMethod.POST, "/jobs").hasRole("RECRUITER")
@@ -115,6 +117,12 @@ public class SecurityConfig {
 
                         // Notifications — any authenticated user
                         .requestMatchers("/notifications/**").authenticated()
+
+                        // Profile — public read, authenticated write
+                        .requestMatchers(HttpMethod.GET, "/profile/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/profile/me/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/profile/me/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/profile/me/**").authenticated()
 
                         // Allow messages and connections
                         .requestMatchers(HttpMethod.POST, "/messages/**").permitAll()

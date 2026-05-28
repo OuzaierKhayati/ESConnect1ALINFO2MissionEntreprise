@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import tn.entreprise.escproject.dto.LoginRequest;
 import tn.entreprise.escproject.dto.LoginResponse;
 import tn.entreprise.escproject.dto.RegisterRequest;
 import tn.entreprise.escproject.dto.UserResponse;
+import tn.entreprise.escproject.dto.UserSearchResult;
 import tn.entreprise.escproject.entite.User;
 import tn.entreprise.escproject.exception.ResourceNotFoundException;
 import tn.entreprise.escproject.services.UserServiceImp;
@@ -106,5 +108,11 @@ public class UserController {
                 .toList();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Users created successfully", savedUsers));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<UserSearchResult>>> searchUsers(@RequestParam String query) {
+        List<UserSearchResult> results = userServiceImp.searchUsersWithProfile(query);
+        return ResponseEntity.ok(ApiResponse.success("Search results", results));
     }
 }
