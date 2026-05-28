@@ -18,4 +18,9 @@ public interface IConnectionService {
 
     List<Connection> getUserConnections(Long userId);
 
+    List<Connection> getPendingRequests(Long userId);
+
+    List<Connection> getSentRequests(Long userId);
+
+    boolean connectionExists(Long senderId, Long receiverId);
 }

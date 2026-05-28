@@ -9,7 +9,6 @@ import tn.entreprise.escproject.entite.enums.ConnectionStatus;
 import tn.entreprise.escproject.repositories.ConnectionRepository;
 import tn.entreprise.escproject.repositories.UserRepository;
 import tn.entreprise.escproject.services.Interfaces.IConnectionService;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,21 +21,61 @@ public class ConnectionServiceImp implements IConnectionService {
     private final UserRepository userRepository;
 
     @Override
-    public Connection sendConnectionRequest(ConnectionRequestDTO dto) {
+    public Connection sendConnectionRequest(
+            ConnectionRequestDTO dto) {
 
-        User sender = userRepository.findById(dto.getSenderId())
-                .orElseThrow(() ->
-                        new RuntimeException("Sender not found"));
+        // ========================================
+        // CHECK EXISTING CONNECTION
+        // ========================================
 
-        User receiver = userRepository.findById(dto.getReceiverId())
+        if (connectionRepository.existsConnectionBetween(
+
+                dto.getSenderId(),
+
+                dto.getReceiverId()
+        )) {
+
+            throw new RuntimeException(
+                    "Connection already exists"
+            );
+        }
+
+        // ========================================
+        // GET USERS
+        // ========================================
+
+        User sender = userRepository.findById(
+                        dto.getSenderId())
+
                 .orElseThrow(() ->
-                        new RuntimeException("Receiver not found"));
+
+                        new RuntimeException(
+                                "Sender not found"
+                        ));
+
+        User receiver = userRepository.findById(
+                        dto.getReceiverId())
+
+                .orElseThrow(() ->
+
+                        new RuntimeException(
+                                "Receiver not found"
+                        ));
+
+        // ========================================
+        // CREATE CONNECTION
+        // ========================================
 
         Connection connection = Connection.builder()
+
                 .sender(sender)
+
                 .receiver(receiver)
+
                 .status(ConnectionStatus.PENDING)
+
                 .createdAt(LocalDateTime.now())
+
                 .build();
 
         return connectionRepository.save(connection);
@@ -76,5 +115,36 @@ public class ConnectionServiceImp implements IConnectionService {
     public List<Connection> getUserConnections(Long userId) {
 
         return connectionRepository.findUserConnections(userId);
+    }
+
+    @Override
+    public List<Connection> getPendingRequests(
+            Long userId) {
+
+        return connectionRepository
+                .findPendingRequests(userId);
+    }
+
+    @Override
+    public List<Connection> getSentRequests(
+            Long userId) {
+
+        return connectionRepository
+                .findSentRequests(userId);
+    }
+
+    @Override
+    public boolean connectionExists(
+
+            Long senderId,
+
+            Long receiverId) {
+
+        return connectionRepository.existsConnectionBetween(
+
+                senderId,
+
+                receiverId
+        );
     }
 }

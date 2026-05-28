@@ -149,6 +149,8 @@ import org.springframework.data.domain.Page;
 
 import org.springframework.http.MediaType;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -171,6 +173,8 @@ public class MessageController {
     private final IMessageService messageService;
 
     private final UploadService uploadService;
+
+    private final SimpMessagingTemplate messagingTemplate;
 
     // =========================================================
     // SEND MESSAGE
@@ -301,11 +305,8 @@ public class MessageController {
         Message updatedMessage =
                 messageService.updateMessage(message);
 
-        // ==============================================
-        // Return DTO
-        // ==============================================
-
-        return new MessageResponseDTO(
+        MessageResponseDTO response =
+                new MessageResponseDTO(
 
                 updatedMessage.getId(),
 
@@ -327,5 +328,15 @@ public class MessageController {
 
                 updatedMessage.getSentAt()
         );
+
+        messagingTemplate.convertAndSend(
+
+                "/topic/messages/"
+                        + updatedMessage.getReceiver().getId(),
+
+                response
+        );
+
+        return response;
     }
 }

@@ -83,6 +83,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/chat/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         
                         // Protected endpoints - require ROLE_RECRUITER
                         // .requestMatchers(HttpMethod.POST, "/jobOffer/**").hasRole("RECRUITER")

@@ -46,4 +46,36 @@ public class ConnectionController {
 
         return connectionService.getUserConnections(userId);
     }
+
+    @GetMapping("/pending/{userId}")
+    public List<Connection> getPendingRequests(
+
+            @PathVariable Long userId) {
+
+        return connectionService
+                .getPendingRequests(userId);
+    }
+
+    @GetMapping("/sent/{userId}")
+    public List<Connection> getSentRequests(
+
+            @PathVariable Long userId) {
+
+        return connectionService
+                .getSentRequests(userId);
+    }
+
+    @PostMapping("/check")
+    public boolean checkConnection(
+
+            @RequestBody ConnectionRequestDTO dto) {
+
+        return connectionService
+                .connectionExists(
+
+                        dto.getSenderId(),
+
+                        dto.getReceiverId()
+                );
+    }
 }

@@ -14,6 +14,9 @@ public class UploadService {
     private final String UPLOAD_DIR =
             "uploads/files/";
 
+    private final String PUBLIC_UPLOAD_PATH =
+            "/uploads/files/";
+
     public String uploadFile(
             MultipartFile file) throws IOException {
 
@@ -23,7 +26,8 @@ public class UploadService {
                         + file.getOriginalFilename();
 
         Path path = Paths.get(
-                UPLOAD_DIR + fileName
+                UPLOAD_DIR,
+                fileName
         );
 
         Files.createDirectories(
@@ -35,6 +39,6 @@ public class UploadService {
                 file.getBytes()
         );
 
-        return path.toString();
+        return PUBLIC_UPLOAD_PATH + fileName;
     }
 }
