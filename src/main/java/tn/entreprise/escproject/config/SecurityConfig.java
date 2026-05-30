@@ -83,24 +83,49 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
-                        
+
+                        // =======================
+                        // Publications
+                        // =======================
+//                        .requestMatchers(HttpMethod.GET, "/publications/**").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/publications/**").authenticated()
+//                        .requestMatchers(HttpMethod.PUT, "/publications/**").authenticated()
+//                        .requestMatchers(HttpMethod.DELETE, "/publications/**").authenticated()
+//
+//                        // =======================
+//                        // Commentaires
+//                        // =======================
+//                        .requestMatchers(HttpMethod.GET, "/commentaires/**").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/commentaires/**").authenticated()
+//                        .requestMatchers(HttpMethod.PUT, "/commentaires/**").authenticated()
+//                        .requestMatchers(HttpMethod.DELETE, "/commentaires/**").authenticated()
+//
+//                        // =======================
+//                        // Likes
+//                        // =======================
+//                        .requestMatchers(HttpMethod.GET, "/likes/**").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/likes/**").authenticated()
+
+                        // =======================
+
                         // Protected endpoints - require ROLE_RECRUITER
                         // .requestMatchers(HttpMethod.POST, "/jobOffer/**").hasRole("RECRUITER")
                         // .requestMatchers(HttpMethod.PUT, "/jobOffer/**").hasRole("RECRUITER")
                         // .requestMatchers(HttpMethod.DELETE, "/jobOffer/**").hasRole("RECRUITER")
-                        
+
                         // Protected endpoints - require ROLE_STUDENT
                         // .requestMatchers(HttpMethod.POST, "/application/**").hasRole("STUDENT")
 
                         // Protected endpoints - require ROLE_ADMIN
                         .requestMatchers("/user/admin/**").hasRole("ADMIN")
                         // .requestMatchers("/admin/**").hasRole("ADMIN")
-                        
+
                         // Protected endpoints - any authenticated user
-                        .requestMatchers(HttpMethod.GET, "/**").authenticated()
-                        
+//                        .requestMatchers(HttpMethod.GET, "/**").authenticated()
+
                         // All other requests require authentication
-                        .anyRequest().authenticated()
+//                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
@@ -115,7 +140,7 @@ public class SecurityConfig {
                             response.getWriter().write("{\"success\":false,\"message\":\"Access denied. You do not have permission to access this resource.\"}");
                         })
                 );
-        
+
         return http.build();
     }
 }
