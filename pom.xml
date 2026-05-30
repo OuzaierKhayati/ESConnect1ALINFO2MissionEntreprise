@@ -33,8 +33,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.1.0</version>
-<!--            for melek the version is 2.8.0-->
+            <version>3.0.3</version>
         </dependency>
         <!--  MySQL Driver  -->
         <dependency>

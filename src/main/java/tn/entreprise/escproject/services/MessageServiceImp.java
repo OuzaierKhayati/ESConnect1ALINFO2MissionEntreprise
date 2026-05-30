@@ -256,6 +256,7 @@ public class MessageServiceImp implements IMessageService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<MessageResponseDTO> getConversation(Long user1, Long user2, int page, int size) {
         return messageRepository.getConversation(user1, user2, PageRequest.of(page, size))
                 .map(this::mapToDTO);
@@ -391,6 +392,15 @@ public class MessageServiceImp implements IMessageService {
     @Override
     public Message updateMessage(Message message) {
         return messageRepository.save(message);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MessageResponseDTO getMessageResponseById(Long messageId) {
+        Message message = messageRepository.findByIdWithRelations(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+
+        return mapToDTO(message);
     }
 
     private MessageResponseDTO mapToDTO(Message message) {

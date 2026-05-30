@@ -57,4 +57,6 @@ public interface IMessageService {
     Message updateMessage(Message message);
 
     Message createMessageEntity(MessageRequestDTO dto);
+
+    MessageResponseDTO getMessageResponseById(Long messageId);
 }

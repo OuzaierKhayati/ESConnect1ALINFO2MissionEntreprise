@@ -356,33 +356,6 @@ public class MessageController {
         Message updatedMessage =
                 messageService.updateMessage(message);
 
-        return new MessageResponseDTO(
-
-                updatedMessage.getId(),
-
-                updatedMessage.getSender().getId(),
-
-                updatedMessage.getSender().getFirstName(),
-
-                updatedMessage.getReceiver() != null
-                        ? updatedMessage.getReceiver().getId()
-                        : 0L,
-
-                updatedMessage.getReceiver() != null
-                        ? updatedMessage.getReceiver().getFirstName()
-                        : (updatedMessage.getGroup() != null ? updatedMessage.getGroup().getName() : null),
-
-                updatedMessage.getContent(),
-
-                updatedMessage.getFileUrl(),
-
-                updatedMessage.getFileType(),
-
-                updatedMessage.isRead(),
-
-                updatedMessage.getSentAt(),
-
-                updatedMessage.getGroup() != null ? updatedMessage.getGroup().getId() : null
-        );
+        return messageService.getMessageResponseById(updatedMessage.getId());
     }
 }

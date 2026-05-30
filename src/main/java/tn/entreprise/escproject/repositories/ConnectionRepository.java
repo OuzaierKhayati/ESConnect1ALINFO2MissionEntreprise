@@ -13,7 +13,18 @@ public interface ConnectionRepository
         extends JpaRepository<Connection, Long> {
 
     @Query("""
+    SELECT c FROM Connection c
+    JOIN FETCH c.sender s
+    JOIN FETCH c.receiver r
+    WHERE c.id = :id
+""")
+    Optional<Connection> findByIdWithUsers(
+            @Param("id") Long id);
+
+    @Query("""
         SELECT c FROM Connection c
+        JOIN FETCH c.sender s
+        JOIN FETCH c.receiver r
         WHERE
         (c.sender.id = :userId
         OR c.receiver.id = :userId)
@@ -24,6 +35,8 @@ public interface ConnectionRepository
 
     @Query("""
     SELECT c FROM Connection c
+    JOIN FETCH c.sender s
+    JOIN FETCH c.receiver r
     WHERE
     c.receiver.id = :userId
     AND c.status = 'PENDING'
@@ -33,6 +46,8 @@ public interface ConnectionRepository
 
     @Query("""
     SELECT c FROM Connection c
+    JOIN FETCH c.sender s
+    JOIN FETCH c.receiver r
     WHERE
     c.sender.id = :userId
     AND c.status = 'PENDING'

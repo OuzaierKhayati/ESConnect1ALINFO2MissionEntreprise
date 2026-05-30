@@ -84,7 +84,7 @@ public class ConnectionServiceImp implements IConnectionService {
     @Override
     public Connection acceptConnection(Long id) {
 
-        Connection connection = connectionRepository.findById(id)
+        Connection connection = connectionRepository.findByIdWithUsers(id)
                 .orElseThrow(() ->
                         new RuntimeException("Connection not found"));
 
@@ -96,7 +96,7 @@ public class ConnectionServiceImp implements IConnectionService {
     @Override
     public Connection rejectConnection(Long id) {
 
-        Connection connection = connectionRepository.findById(id)
+        Connection connection = connectionRepository.findByIdWithUsers(id)
                 .orElseThrow(() ->
                         new RuntimeException("Connection not found"));
 
