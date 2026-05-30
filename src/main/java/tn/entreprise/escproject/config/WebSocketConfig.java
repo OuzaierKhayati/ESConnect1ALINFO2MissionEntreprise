@@ -26,7 +26,10 @@ public class WebSocketConfig
             StompEndpointRegistry registry) {
         // addEndpoint("/chat") : Endpoint WebSocket principal => ws://localhost:8083/chat
         registry.addEndpoint("/chat")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(
+                        "http://localhost:*",
+                        "http://127.0.0.1:*"
+                )
                 .withSockJS();
     }
 }

@@ -10,8 +10,9 @@ public class MessageRequestDTO {
     @NotNull
     private Long senderId;
 
-    @NotNull
     private Long receiverId;
+
+    private Long groupId;
 
     @NotBlank
     private String content;

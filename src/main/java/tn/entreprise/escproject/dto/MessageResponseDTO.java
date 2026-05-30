@@ -28,4 +28,6 @@ public class MessageResponseDTO {
     private boolean isRead;
 
     private LocalDateTime sentAt;
+
+    private Long groupId;
 }

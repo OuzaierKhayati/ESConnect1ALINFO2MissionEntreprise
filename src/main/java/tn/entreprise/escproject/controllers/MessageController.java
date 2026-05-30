@@ -149,12 +149,12 @@ import org.springframework.data.domain.Page;
 
 import org.springframework.http.MediaType;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import tn.entreprise.escproject.dto.GroupCreateRequest;
+import tn.entreprise.escproject.dto.GroupResponseDTO;
 import tn.entreprise.escproject.dto.MessageRequestDTO;
 import tn.entreprise.escproject.dto.MessageResponseDTO;
 
@@ -173,8 +173,6 @@ public class MessageController {
     private final IMessageService messageService;
 
     private final UploadService uploadService;
-
-    private final SimpMessagingTemplate messagingTemplate;
 
     // =========================================================
     // SEND MESSAGE
@@ -216,6 +214,55 @@ public class MessageController {
         );
     }
 
+        @PostMapping("/groups")
+        public GroupResponseDTO createGroup(
+                        @Valid @RequestBody GroupCreateRequest request,
+                        @RequestParam(required = false) Long userId) {
+
+                if (request.getUserId() == null && userId != null) {
+                        request.setUserId(userId);
+                }
+
+                return messageService.createGroup(request);
+        }
+
+        @GetMapping("/groups")
+        public java.util.List<GroupResponseDTO> getGroups(
+                        @RequestParam Long userId) {
+
+                return messageService.getGroupsForUser(userId);
+        }
+
+        @GetMapping("/groups/{groupId}/messages")
+        public java.util.List<MessageResponseDTO> getGroupConversation(
+                        @PathVariable Long groupId) {
+
+                return messageService.getGroupConversation(groupId);
+        }
+
+        @PostMapping("/groups/{groupId}/members/{userId}")
+        public GroupResponseDTO addMemberToGroup(
+                        @PathVariable Long groupId,
+                        @PathVariable Long userId) {
+
+                return messageService.addMemberToGroup(groupId, userId);
+        }
+
+        @DeleteMapping("/groups/{groupId}/members/{userId}")
+        public GroupResponseDTO removeMemberFromGroup(
+                        @PathVariable Long groupId,
+                        @PathVariable Long userId) {
+
+                return messageService.removeMemberFromGroup(groupId, userId);
+        }
+
+        @DeleteMapping("/groups/{groupId}")
+        public void deleteGroup(
+                        @PathVariable Long groupId) {
+
+                messageService.deleteGroup(groupId);
+        }
+
     // =========================================================
     // DELETE MESSAGE
     // =========================================================
@@ -255,7 +302,9 @@ public class MessageController {
 
             @RequestParam Long senderId,
 
-            @RequestParam Long receiverId,
+            @RequestParam(required = false) Long receiverId,
+
+            @RequestParam(required = false) Long groupId,
 
             @RequestParam(required = false)
             String content,
@@ -283,6 +332,8 @@ public class MessageController {
 
         dto.setReceiverId(receiverId);
 
+        dto.setGroupId(groupId);
+
         dto.setContent(content);
 
         // ==============================================
@@ -305,8 +356,7 @@ public class MessageController {
         Message updatedMessage =
                 messageService.updateMessage(message);
 
-        MessageResponseDTO response =
-                new MessageResponseDTO(
+        return new MessageResponseDTO(
 
                 updatedMessage.getId(),
 
@@ -314,9 +364,13 @@ public class MessageController {
 
                 updatedMessage.getSender().getFirstName(),
 
-                updatedMessage.getReceiver().getId(),
+                updatedMessage.getReceiver() != null
+                        ? updatedMessage.getReceiver().getId()
+                        : 0L,
 
-                updatedMessage.getReceiver().getFirstName(),
+                updatedMessage.getReceiver() != null
+                        ? updatedMessage.getReceiver().getFirstName()
+                        : (updatedMessage.getGroup() != null ? updatedMessage.getGroup().getName() : null),
 
                 updatedMessage.getContent(),
 
@@ -326,17 +380,9 @@ public class MessageController {
 
                 updatedMessage.isRead(),
 
-                updatedMessage.getSentAt()
+                updatedMessage.getSentAt(),
+
+                updatedMessage.getGroup() != null ? updatedMessage.getGroup().getId() : null
         );
-
-        messagingTemplate.convertAndSend(
-
-                "/topic/messages/"
-                        + updatedMessage.getReceiver().getId(),
-
-                response
-        );
-
-        return response;
     }
 }

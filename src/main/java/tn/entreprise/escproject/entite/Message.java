@@ -20,9 +20,13 @@ public class Message {
     @JoinColumn(name = "sender_id")
     private User sender;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "receiver_id", nullable = true)
     private User receiver;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "group_id", nullable = true)
+    private ChatGroup group;
 
     @Column(columnDefinition = "TEXT") /* TEXT : car les messages peuvent être longs.*/
     private String content;

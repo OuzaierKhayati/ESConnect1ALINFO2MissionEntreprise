@@ -3,7 +3,9 @@ package tn.entreprise.escproject.repositories;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 import tn.entreprise.escproject.entite.Message;
 
 import java.util.List;
@@ -29,4 +31,19 @@ public interface MessageRepository
             Long user2,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT m FROM Message m
+        WHERE m.group.id = :groupId
+        ORDER BY m.sentAt DESC
+    """)
+    List<Message> getGroupConversation(Long groupId);
+
+    @Modifying
+    @Transactional
+    @Query("""
+        DELETE FROM Message m
+        WHERE m.group.id = :groupId
+    """)
+    void deleteByGroupId(Long groupId);
 }
