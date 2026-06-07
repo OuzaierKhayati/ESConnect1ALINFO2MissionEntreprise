@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import tn.entreprise.escproject.security.JwtFilter;
+import tn.entreprise.escproject.security.OAuth2LoginSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +28,9 @@ public class SecurityConfig {
     
     @Autowired
     private JwtFilter jwtFilter;
+
+    @Autowired
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     
     /**Configure password encoder using BCrypt @return BCryptPasswordEncoder bean*/
     @Bean
@@ -84,6 +88,9 @@ public class SecurityConfig {
                         // Public endpoints (context path /escproject/api is already stripped by servlet container)
                         .requestMatchers(HttpMethod.POST, "/user/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
+                        .requestMatchers("/password/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/login/oauth2/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
@@ -91,22 +98,54 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         
                         // Protected endpoints - require ROLE_RECRUITER
-                        // .requestMatchers(HttpMethod.POST, "/jobOffer/**").hasRole("RECRUITER")
-                        // .requestMatchers(HttpMethod.PUT, "/jobOffer/**").hasRole("RECRUITER")
-                        // .requestMatchers(HttpMethod.DELETE, "/jobOffer/**").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.POST, "/jobs").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.PUT, "/jobs/**").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.DELETE, "/jobs/**").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.GET, "/jobs/my").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.GET, "/applications/job/**").hasRole("RECRUITER")
+                        .requestMatchers(HttpMethod.PUT, "/applications/*/status").hasRole("RECRUITER")
                         
                         // Protected endpoints - require ROLE_STUDENT
-                        // .requestMatchers(HttpMethod.POST, "/application/**").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.POST, "/applications/job/**").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.DELETE, "/applications/**").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.GET, "/applications/my").hasRole("STUDENT")
 
                         // Protected endpoints - require ROLE_ADMIN
                         .requestMatchers("/user/admin/**").hasRole("ADMIN")
                         // .requestMatchers("/admin/**").hasRole("ADMIN")
                         
                         // Protected endpoints - any authenticated user
-                        .requestMatchers(HttpMethod.GET, "/**").authenticated()
+                        // .requestMatchers(HttpMethod.GET, "/**").authenticated()
+
+                        // Notifications — any authenticated user
+                        .requestMatchers("/notifications/**").authenticated()
+
+                        // Profile — public read, authenticated write
+                        .requestMatchers(HttpMethod.GET, "/profile/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/profile/me/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/profile/me/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/profile/me/**").authenticated()
+
+                        // Allow messages and connections
+                        .requestMatchers(HttpMethod.POST, "/messages/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/messages/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/messages/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/messages/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/connections/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/connections/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/connections/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/connections/**").permitAll()
                         
                         // All other requests require authentication
-                        .anyRequest().authenticated()
+                         .anyRequest().authenticated()
+//                        .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            response.sendRedirect("http://localhost:4200/login?error=" +
+                                    java.net.URLEncoder.encode(exception.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
+                        })
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception

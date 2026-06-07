@@ -1,16 +1,22 @@
 package tn.entreprise.escproject.services;
 
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
 import tn.entreprise.escproject.dto.ConnectionRequestDTO;
+import tn.entreprise.escproject.dto.ConnectionResponseDTO;
+import tn.entreprise.escproject.dto.ConnectionUserDTO;
 import tn.entreprise.escproject.entite.Connection;
 import tn.entreprise.escproject.entite.User;
 import tn.entreprise.escproject.entite.enums.ConnectionStatus;
 import tn.entreprise.escproject.repositories.ConnectionRepository;
+import tn.entreprise.escproject.repositories.UserProfileRepository;
 import tn.entreprise.escproject.repositories.UserRepository;
 import tn.entreprise.escproject.services.Interfaces.IConnectionService;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,131 +26,115 @@ public class ConnectionServiceImp implements IConnectionService {
 
     private final UserRepository userRepository;
 
+    private final UserProfileRepository userProfileRepository;
+
     @Override
-    public Connection sendConnectionRequest(
+    @Transactional
+    public ConnectionResponseDTO sendConnectionRequest(
             ConnectionRequestDTO dto) {
 
-        // ========================================
-        // CHECK EXISTING CONNECTION
-        // ========================================
-
         if (connectionRepository.existsConnectionBetween(
-
                 dto.getSenderId(),
-
-                dto.getReceiverId()
-        )) {
-
-            throw new RuntimeException(
-                    "Connection already exists"
-            );
+                dto.getReceiverId())) {
+            throw new RuntimeException("Connection already exists");
         }
 
-        // ========================================
-        // GET USERS
-        // ========================================
+        User sender = userRepository.findById(dto.getSenderId())
+                .orElseThrow(() -> new RuntimeException("Sender not found"));
 
-        User sender = userRepository.findById(
-                        dto.getSenderId())
-
-                .orElseThrow(() ->
-
-                        new RuntimeException(
-                                "Sender not found"
-                        ));
-
-        User receiver = userRepository.findById(
-                        dto.getReceiverId())
-
-                .orElseThrow(() ->
-
-                        new RuntimeException(
-                                "Receiver not found"
-                        ));
-
-        // ========================================
-        // CREATE CONNECTION
-        // ========================================
+        User receiver = userRepository.findById(dto.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("Receiver not found"));
 
         Connection connection = Connection.builder()
-
                 .sender(sender)
-
                 .receiver(receiver)
-
                 .status(ConnectionStatus.PENDING)
-
                 .createdAt(LocalDateTime.now())
-
                 .build();
 
-        return connectionRepository.save(connection);
+        return toDto(connectionRepository.save(connection));
     }
 
     @Override
-    public Connection acceptConnection(Long id) {
-
+    @Transactional
+    public ConnectionResponseDTO acceptConnection(Long id) {
         Connection connection = connectionRepository.findByIdWithUsers(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Connection not found"));
+                .orElseThrow(() -> new RuntimeException("Connection not found"));
 
         connection.setStatus(ConnectionStatus.ACCEPTED);
 
-        return connectionRepository.save(connection);
+        return toDto(connectionRepository.save(connection));
     }
 
     @Override
-    public Connection rejectConnection(Long id) {
-
+    @Transactional
+    public ConnectionResponseDTO rejectConnection(Long id) {
         Connection connection = connectionRepository.findByIdWithUsers(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Connection not found"));
+                .orElseThrow(() -> new RuntimeException("Connection not found"));
 
         connection.setStatus(ConnectionStatus.REJECTED);
 
-        return connectionRepository.save(connection);
+        return toDto(connectionRepository.save(connection));
     }
 
     @Override
     public void deleteConnection(Long id) {
-
         connectionRepository.deleteById(id);
     }
 
     @Override
-    public List<Connection> getUserConnections(Long userId) {
-
-        return connectionRepository.findUserConnections(userId);
+    public List<ConnectionResponseDTO> getUserConnections(Long userId) {
+        return connectionRepository.findUserConnections(userId)
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
     @Override
-    public List<Connection> getPendingRequests(
-            Long userId) {
-
-        return connectionRepository
-                .findPendingRequests(userId);
+    public List<ConnectionResponseDTO> getPendingRequests(Long userId) {
+        return connectionRepository.findPendingRequests(userId)
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
     @Override
-    public List<Connection> getSentRequests(
-            Long userId) {
-
-        return connectionRepository
-                .findSentRequests(userId);
+    public List<ConnectionResponseDTO> getSentRequests(Long userId) {
+        return connectionRepository.findSentRequests(userId)
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
     @Override
-    public boolean connectionExists(
+    public boolean connectionExists(Long senderId, Long receiverId) {
+        return connectionRepository.existsConnectionBetween(senderId, receiverId);
+    }
 
-            Long senderId,
+    private ConnectionResponseDTO toDto(Connection connection) {
+        return ConnectionResponseDTO.builder()
+                .id(connection.getId())
+                .sender(toUserDto(connection.getSender()))
+                .receiver(toUserDto(connection.getReceiver()))
+                .status(connection.getStatus())
+                .createdAt(connection.getCreatedAt())
+                .build();
+    }
 
-            Long receiverId) {
+    private ConnectionUserDTO toUserDto(User user) {
+        if (user == null) {
+            return null;
+        }
 
-        return connectionRepository.existsConnectionBetween(
-
-                senderId,
-
-                receiverId
-        );
+        return ConnectionUserDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .roleUser(user.getRoleUser().name())
+                .profilePictureUrl(userProfileRepository.findByUserId(user.getId())
+                    .map(profile -> profile.getProfilePictureUrl())
+                    .orElse(null))
+                .build();
     }
 }

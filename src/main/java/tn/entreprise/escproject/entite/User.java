@@ -94,9 +94,14 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @NotBlank
-    @Column(unique = true, nullable = false)
+    @Column(nullable = true)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    private String providerId;
 
     @NotBlank
     private String firstName;
@@ -115,6 +120,16 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus userStatus;
 
+    private boolean online = false;
+
+    // Recruiter → JobOffers
+    @OneToMany(mappedBy = "recruiter")
+    private List<JobOffer> jobOffers;
+
+    // Student → Applications
+    @OneToMany(mappedBy = "student")
+    private List<Application> applications;
+
     @JsonIgnore
     @OneToMany(mappedBy = "sender")
     private List<Connection> sentConnections;
@@ -130,4 +145,29 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "receiver")
     private List<Message> receivedMessages;
+
+    // Profile
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserProfile profile;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Education> educations;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Experience> experiences;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Certification> certifications;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Club> clubs;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Project> projects;
 }

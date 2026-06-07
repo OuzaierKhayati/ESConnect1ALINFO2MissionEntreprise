@@ -440,10 +440,10 @@ public class MessageServiceImp implements IMessageService {
 
         messagingTemplate.convertAndSend("/topic/messages/" + savedMessage.getReceiver().getId(), response);
 
-        NotificationDTO notification = new NotificationDTO(
-                "New message received",
-                savedMessage.getSender().getFirstName()
-        );
+        NotificationDTO notification = NotificationDTO.builder()
+                .type("New message received")
+                .message(savedMessage.getSender().getFirstName())
+                .build();
 
         messagingTemplate.convertAndSend("/topic/notifications/" + savedMessage.getReceiver().getId(), notification);
     }

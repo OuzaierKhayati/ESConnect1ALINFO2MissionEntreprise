@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -20,6 +23,7 @@ import tn.entreprise.escproject.dto.LoginRequest;
 import tn.entreprise.escproject.dto.LoginResponse;
 import tn.entreprise.escproject.dto.RegisterRequest;
 import tn.entreprise.escproject.dto.UserResponse;
+import tn.entreprise.escproject.dto.UserSearchResult;
 import tn.entreprise.escproject.entite.User;
 import tn.entreprise.escproject.exception.ResourceNotFoundException;
 import tn.entreprise.escproject.services.UserServiceImp;
@@ -42,6 +46,14 @@ public class UserController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         LoginResponse response = userServiceImp.authenticateUser(loginRequest);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails != null) {
+            userServiceImp.setUserOffline(userDetails.getUsername());
+        }
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
     }
 
     @GetMapping("/{id}")
@@ -96,5 +108,11 @@ public class UserController {
                 .toList();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Users created successfully", savedUsers));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<UserSearchResult>>> searchUsers(@RequestParam String query) {
+        List<UserSearchResult> results = userServiceImp.searchUsersWithProfile(query);
+        return ResponseEntity.ok(ApiResponse.success("Search results", results));
     }
 }

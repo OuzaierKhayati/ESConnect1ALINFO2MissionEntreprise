@@ -66,20 +66,14 @@ public class AdminServiceImp implements IAdminService {
                 ? parseStatus(request.getUserStatus())
                 : UserStatus.ACTIVE;
 
-        User user = new User(
-                null,
-                request.getEmail(),
-                Objects.requireNonNull(passwordEncoder.encode(request.getPassword())),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getDateOfBirth(),
-                roleUser,
-                status,
-                null,
-                null,
-                null,
-                null
-        );
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(Objects.requireNonNull(passwordEncoder.encode(request.getPassword())));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setDateOfBirth(request.getDateOfBirth());
+        user.setRoleUser(roleUser);
+        user.setUserStatus(status);
 
         userRepository.save(user);
         log.info("Admin: user created successfully - {} with role {}", user.getEmail(), roleUser);

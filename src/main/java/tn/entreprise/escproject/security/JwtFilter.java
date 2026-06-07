@@ -44,7 +44,9 @@ public class JwtFilter extends OncePerRequestFilter {
             boolean isPublicEndpoint = requestPath.endsWith("/user/login") 
                     || requestPath.endsWith("/user/register")
                     || requestPath.contains("/swagger-ui") 
-                    || requestPath.contains("/v3/api-docs");
+                    || requestPath.contains("/v3/api-docs")
+                    || requestPath.contains("/oauth2/")
+                    || requestPath.contains("/login/oauth2/");
             
             if (isPublicEndpoint) {
                 filterChain.doFilter(request, response);

@@ -1,8 +1,8 @@
 package tn.entreprise.escproject.services;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,15 +13,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import tn.entreprise.escproject.dto.*;
-import tn.entreprise.escproject.entite.Message;
+import tn.entreprise.escproject.dto.LoginRequest;
+import tn.entreprise.escproject.dto.LoginResponse;
+import tn.entreprise.escproject.dto.RegisterRequest;
+import tn.entreprise.escproject.dto.UserResponse;
+import tn.entreprise.escproject.dto.UserSearchResult;
 import tn.entreprise.escproject.entite.RoleUser;
 import tn.entreprise.escproject.entite.User;
+import tn.entreprise.escproject.entite.UserProfile;
 import tn.entreprise.escproject.entite.UserStatus;
 import tn.entreprise.escproject.exception.BadRequestException;
 import tn.entreprise.escproject.exception.ConflictException;
 import tn.entreprise.escproject.exception.ResourceNotFoundException;
 import tn.entreprise.escproject.exception.UnauthorizedException;
+import tn.entreprise.escproject.repositories.UserProfileRepository;
 import tn.entreprise.escproject.repositories.UserRepository;
 import tn.entreprise.escproject.services.Interfaces.IService;
 import tn.entreprise.escproject.services.Interfaces.IUserService;
@@ -34,6 +39,9 @@ public class UserServiceImp implements IService<User>, IUserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -105,20 +113,14 @@ public class UserServiceImp implements IService<User>, IUserService {
 
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
-        User user = new User(
-                null,
-                registerRequest.getEmail(),
-                Objects.requireNonNull(encodedPassword),
-                registerRequest.getFirstName(),
-                registerRequest.getLastName(),
-                registerRequest.getDateOfBirth(),
-                roleUser,
-                roleUser == RoleUser.STUDENT || roleUser == RoleUser.PROFESSOR ? UserStatus.PENDING : UserStatus.ACTIVE,
-                null,
-                null,
-                null,
-                null
-        );
+        User user = new User();
+        user.setEmail(registerRequest.getEmail());
+        user.setPassword(Objects.requireNonNull(encodedPassword));
+        user.setFirstName(registerRequest.getFirstName());
+        user.setLastName(registerRequest.getLastName());
+        user.setDateOfBirth(registerRequest.getDateOfBirth());
+        user.setRoleUser(roleUser);
+        user.setUserStatus(roleUser == RoleUser.STUDENT || roleUser == RoleUser.PROFESSOR ? UserStatus.PENDING : UserStatus.ACTIVE);
 
         userRepository.save(user);
         log.info("User registered successfully: {} with role: {}", user.getEmail(), roleUser);
@@ -161,6 +163,8 @@ public class UserServiceImp implements IService<User>, IUserService {
                 user.getRoleUser().toString()
         );
 
+        user.setOnline(true);
+        userRepository.save(user);
         log.info("User logged in successfully: {}", user.getEmail());
 
         return new LoginResponse(
@@ -175,14 +179,53 @@ public class UserServiceImp implements IService<User>, IUserService {
 
     @Override
     public UserResponse convertToUserResponse(User user) {
-        return new UserResponse(
+        UserProfile profile = userProfileRepository.findByUserId(user.getId()).orElse(null);
+        UserResponse response = new UserResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getDateOfBirth(),
                 user.getRoleUser().toString(),
-                user.getUserStatus().toString()
+                user.getUserStatus().toString(),
+            user.isOnline(),
+            profile != null ? profile.getProfilePictureUrl() : null
         );
+        return response;
+    }
+
+    public void setUserOffline(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setOnline(false);
+            userRepository.save(user);
+            log.info("User {} set to offline", email);
+        });
+    }
+
+    public List<UserSearchResult> searchUsersWithProfile(String query) {
+        if (query == null || query.trim().length() < 2) {
+            return List.of();
+        }
+        String trimmed = query.trim();
+        List<User> users = userRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        trimmed, trimmed, trimmed);
+
+        return users.stream()
+                .filter(u -> u.getUserStatus() == UserStatus.ACTIVE)
+                .limit(10)
+                .map(u -> {
+                    UserProfile profile = userProfileRepository.findByUserId(u.getId()).orElse(null);
+                    return new UserSearchResult(
+                            u.getId(),
+                            u.getFirstName(),
+                            u.getLastName(),
+                            u.getRoleUser().toString(),
+                            profile != null ? profile.getHeadline() : null,
+                            profile != null ? profile.getProfilePictureUrl() : null,
+                            u.isOnline()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }

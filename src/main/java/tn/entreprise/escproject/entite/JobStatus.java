@@ -1,5 +1,5 @@
 package tn.entreprise.escproject.entite;
 
-public class Sample {
-
+public enum JobStatus {
+    OPEN, CLOSED
 }
