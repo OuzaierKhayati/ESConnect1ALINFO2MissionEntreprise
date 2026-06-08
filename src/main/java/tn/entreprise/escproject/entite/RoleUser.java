@@ -1,5 +1,5 @@
 package tn.entreprise.escproject.entite;
 
 public enum RoleUser {
-    STUDENT, PROFESSOR, RECRUITER, ADMIN
+    STUDENT, PROFESSOR, RECRUITER, ADMIN, FORMATEUR
 }

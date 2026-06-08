@@ -125,6 +125,7 @@ public class JobOfferServiceImp implements IService<JobOffer>, IJobOfferService 
         log.info("Job deleted: id={}", jobId);
     }
 
+    @Transactional
     public JobOfferResponse toggleJobStatus(Long jobId, Long recruiterId) {
         JobOffer job = findJobOrThrow(jobId);
         if (!job.getRecruiter().getId().equals(recruiterId)) {
@@ -256,7 +257,8 @@ public class JobOfferServiceImp implements IService<JobOffer>, IJobOfferService 
                 .collect(Collectors.toList());
     }
 
-    public CommentResponse toggleCommentLike(Long commentId, Long userId) {
+        @Transactional
+        public CommentResponse toggleCommentLike(Long commentId, Long userId) {
         JobComment comment = jobCommentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
         User user = userRepository.findById(userId)
@@ -296,8 +298,12 @@ public class JobOfferServiceImp implements IService<JobOffer>, IJobOfferService 
     }
 
     public JobOfferResponse toResponse(JobOffer job, Long currentUserId) {
-        boolean liked = currentUserId != null && job.getLikedBy().stream().anyMatch(u -> u.getId().equals(currentUserId));
-        boolean applied = currentUserId != null && job.getApplications().stream()
+        List<User> likedBy = job.getLikedBy() != null ? job.getLikedBy() : List.of();
+        List<Application> applications = job.getApplications() != null ? job.getApplications() : List.of();
+        List<JobComment> comments = job.getComments() != null ? job.getComments() : List.of();
+
+        boolean liked = currentUserId != null && likedBy.stream().anyMatch(u -> u.getId().equals(currentUserId));
+        boolean applied = currentUserId != null && applications.stream()
                 .anyMatch(a -> a.getStudent().getId().equals(currentUserId));
 
         return JobOfferResponse.builder()
@@ -314,9 +320,9 @@ public class JobOfferServiceImp implements IService<JobOffer>, IJobOfferService 
                 .recruiterId(job.getRecruiter() != null ? job.getRecruiter().getId() : null)
                 .recruiterName(job.getRecruiter() != null ? job.getRecruiter().getFirstName() + " " + job.getRecruiter().getLastName() : null)
                 .recruiterEmail(job.getRecruiter() != null ? job.getRecruiter().getEmail() : null)
-                .applicationCount(job.getApplications() != null ? job.getApplications().size() : 0)
-                .likeCount(job.getLikedBy() != null ? job.getLikedBy().size() : 0)
-                .commentCount(job.getComments() != null ? job.getComments().size() : 0)
+                .applicationCount(applications.size())
+                .likeCount(likedBy.size())
+                .commentCount(comments.size())
                 .likedByCurrentUser(liked)
                 .appliedByCurrentUser(applied)
                 .build();

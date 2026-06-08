@@ -106,7 +106,7 @@ public class UserServiceImp implements IService<User>, IUserService {
 
         RoleUser roleUser;
         try {
-            roleUser = RoleUser.valueOf(registerRequest.getRoleUser());
+            roleUser = RoleUser.valueOf(registerRequest.getRoleUser().trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid role specified: " + registerRequest.getRoleUser());
         }
@@ -120,11 +120,22 @@ public class UserServiceImp implements IService<User>, IUserService {
         user.setLastName(registerRequest.getLastName());
         user.setDateOfBirth(registerRequest.getDateOfBirth());
         user.setRoleUser(roleUser);
-        user.setUserStatus(roleUser == RoleUser.STUDENT || roleUser == RoleUser.PROFESSOR ? UserStatus.PENDING : UserStatus.ACTIVE);
+        user.setUserStatus(getInitialStatusForRole(roleUser));
 
         userRepository.save(user);
         log.info("User registered successfully: {} with role: {}", user.getEmail(), roleUser);
         return convertToUserResponse(user);
+    }
+
+    private UserStatus getInitialStatusForRole(RoleUser roleUser) {
+        return switch (roleUser) {
+            // External users and recruiters can access directly after signup.
+            case FORMATEUR, RECRUITER -> UserStatus.ACTIVE;
+            // University-internal roles require admin approval.
+            case STUDENT, PROFESSOR -> UserStatus.PENDING;
+            // ADMIN creation is blocked above; keep a safe fallback.
+            default -> UserStatus.PENDING;
+        };
     }
 
     @Override

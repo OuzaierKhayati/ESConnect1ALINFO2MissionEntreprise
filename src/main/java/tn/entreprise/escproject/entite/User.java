@@ -53,17 +53,7 @@
 
 package tn.entreprise.escproject.entite;
 
-import java.time.LocalDate;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -71,7 +61,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -112,21 +101,25 @@ public class User {
     @JsonFormat(pattern = "MM/dd/yyyy")
     private LocalDate dateOfBirth;
 
-    @NonNull
     @Enumerated(EnumType.STRING)
     private RoleUser roleUser;
 
-    @NonNull
     @Enumerated(EnumType.STRING)
     private UserStatus userStatus;
 
-    private boolean online = false;
+    private Boolean online = false;
+
+    public boolean isOnline() {
+        return Boolean.TRUE.equals(online);
+    }
 
     // Recruiter → JobOffers
+    @JsonIgnore
     @OneToMany(mappedBy = "recruiter")
     private List<JobOffer> jobOffers;
 
     // Student → Applications
+    @JsonIgnore
     @OneToMany(mappedBy = "student")
     private List<Application> applications;
 
@@ -170,4 +163,12 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "createur")
+    private List<Formation> formations;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user")
+    private List<InscriptionFormation> inscriptions;
 }
