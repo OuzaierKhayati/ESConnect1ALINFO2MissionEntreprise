@@ -16,10 +16,16 @@ import tn.entreprise.escproject.services.Interfaces.IInscriptionFormationService
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @AllArgsConstructor
 public class InscriptionFormationServiceImpl implements IInscriptionFormationService {
+
+    private static final Set<StatutInscription> TERMINAL_STATUSES = Set.of(
+            StatutInscription.ANNULE,
+            StatutInscription.REJETE
+    );
 
     private InscriptionFormationRepository inscriptionRepository;
     private FormationRepository formationRepository;
@@ -48,11 +54,19 @@ public class InscriptionFormationServiceImpl implements IInscriptionFormationSer
         Formation formation = formationRepository.findById(formationId)
                 .orElseThrow(() -> new RuntimeException("Formation introuvable"));
 
-        if (inscriptionRepository.existsByUser_IdAndFormation_IdAndStatutNot(userId, formationId, StatutInscription.ANNULE)) {
+        boolean alreadyActive = inscriptionRepository.findByUserId(userId).stream()
+            .anyMatch(i -> i.getFormation() != null
+                && formationId.equals(i.getFormation().getId())
+                && !TERMINAL_STATUSES.contains(i.getStatut()));
+
+        if (alreadyActive) {
             throw new ConflictException("Vous êtes déjà inscrit à cette formation.");
         }
 
-        long count = inscriptionRepository.countByFormationIdAndStatutNot(formationId, StatutInscription.ANNULE);
+        long count = inscriptionRepository.findByFormationId(formationId).stream()
+            .filter(i -> !TERMINAL_STATUSES.contains(i.getStatut()))
+            .count();
+
         if (formation.getCapaciteMax() != null && count >= formation.getCapaciteMax()) {
             throw new BadRequestException("Formation complète.");
         }

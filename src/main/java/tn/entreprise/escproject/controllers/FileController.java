@@ -25,7 +25,7 @@ public class FileController {
             "docx", MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     );
 
-    @GetMapping("/resume/{subfolder}/{filename}")
+    @GetMapping("/resume/{subfolder}/{filename:.+}")
     public ResponseEntity<Resource> serveFile(
             @PathVariable String subfolder,
             @PathVariable String filename) throws MalformedURLException {
@@ -46,7 +46,7 @@ public class FileController {
                 .body(resource);
     }
 
-    @GetMapping("/download/{subfolder}/{filename}")
+    @GetMapping("/download/{subfolder}/{filename:.+}")
     public ResponseEntity<Resource> downloadFile(
             @PathVariable String subfolder,
             @PathVariable String filename) throws MalformedURLException {

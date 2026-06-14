@@ -1,24 +1,44 @@
 package tn.entreprise.escproject.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import tn.entreprise.escproject.dto.*;
-import tn.entreprise.escproject.entite.*;
-import tn.entreprise.escproject.exception.BadRequestException;
-import tn.entreprise.escproject.exception.ResourceNotFoundException;
-import tn.entreprise.escproject.repositories.*;
-import tn.entreprise.escproject.services.Interfaces.IProfileService;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import tn.entreprise.escproject.dto.CertificationDTO;
+import tn.entreprise.escproject.dto.ClubDTO;
+import tn.entreprise.escproject.dto.EducationDTO;
+import tn.entreprise.escproject.dto.ExperienceDTO;
+import tn.entreprise.escproject.dto.ProfileResponse;
+import tn.entreprise.escproject.dto.ProfileUpdateRequest;
+import tn.entreprise.escproject.dto.ProjectDTO;
+import tn.entreprise.escproject.entite.Certification;
+import tn.entreprise.escproject.entite.Club;
+import tn.entreprise.escproject.entite.Education;
+import tn.entreprise.escproject.entite.Experience;
+import tn.entreprise.escproject.entite.ExperienceType;
+import tn.entreprise.escproject.entite.Project;
+import tn.entreprise.escproject.entite.User;
+import tn.entreprise.escproject.entite.UserProfile;
+import tn.entreprise.escproject.exception.BadRequestException;
+import tn.entreprise.escproject.exception.ResourceNotFoundException;
+import tn.entreprise.escproject.repositories.CertificationRepository;
+import tn.entreprise.escproject.repositories.ClubRepository;
+import tn.entreprise.escproject.repositories.EducationRepository;
+import tn.entreprise.escproject.repositories.ExperienceRepository;
+import tn.entreprise.escproject.repositories.ProjectRepository;
+import tn.entreprise.escproject.repositories.UserProfileRepository;
+import tn.entreprise.escproject.repositories.UserRepository;
+import tn.entreprise.escproject.services.Interfaces.IProfileService;
 
 @Service
 public class ProfileServiceImp implements IProfileService {
@@ -206,11 +226,12 @@ public class ProfileServiceImp implements IProfileService {
         Experience experience = new Experience();
         experience.setTitle(dto.getTitle());
         experience.setCompany(dto.getCompany());
-        experience.setType(dto.getType() != null ? ExperienceType.valueOf(dto.getType()) : null);
+        experience.setType(parseExperienceType(dto.getType()));
         experience.setLocation(dto.getLocation());
         experience.setStartDate(dto.getStartDate());
-        experience.setEndDate(dto.getEndDate());
-        experience.setCurrentlyWorking(dto.isCurrentlyWorking());
+        // If currently working, set endDate to null; otherwise use the provided endDate
+        experience.setEndDate(Boolean.TRUE.equals(dto.getCurrentlyWorking()) ? null : dto.getEndDate());
+        experience.setCurrentlyWorking(dto.getCurrentlyWorking() != null ? dto.getCurrentlyWorking() : false);
         experience.setDescription(dto.getDescription());
         experience.setUser(user);
         experience = experienceRepository.save(experience);
@@ -227,11 +248,12 @@ public class ProfileServiceImp implements IProfileService {
 
         experience.setTitle(dto.getTitle());
         experience.setCompany(dto.getCompany());
-        experience.setType(dto.getType() != null ? ExperienceType.valueOf(dto.getType()) : null);
+        experience.setType(parseExperienceType(dto.getType()));
         experience.setLocation(dto.getLocation());
         experience.setStartDate(dto.getStartDate());
-        experience.setEndDate(dto.getEndDate());
-        experience.setCurrentlyWorking(dto.isCurrentlyWorking());
+        // If currently working, set endDate to null; otherwise use the provided endDate
+        experience.setEndDate(Boolean.TRUE.equals(dto.getCurrentlyWorking()) ? null : dto.getEndDate());
+        experience.setCurrentlyWorking(dto.getCurrentlyWorking() != null ? dto.getCurrentlyWorking() : false);
         experience.setDescription(dto.getDescription());
         experience = experienceRepository.save(experience);
         log.info("Experience {} updated for user: {}", experienceId, email);
@@ -403,6 +425,18 @@ public class ProfileServiceImp implements IProfileService {
     private void validateOwnership(Long ownerId, Long userId) {
         if (!ownerId.equals(userId)) {
             throw new BadRequestException("You do not have permission to modify this resource");
+        }
+    }
+
+    private ExperienceType parseExperienceType(String rawType) {
+        if (!StringUtils.hasText(rawType)) {
+            return null;
+        }
+
+        try {
+            return ExperienceType.valueOf(rawType.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid experience type: " + rawType);
         }
     }
 

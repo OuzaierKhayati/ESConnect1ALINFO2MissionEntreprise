@@ -22,6 +22,7 @@ import tn.entreprise.escproject.dto.ApiResponse;
 import tn.entreprise.escproject.dto.LoginRequest;
 import tn.entreprise.escproject.dto.LoginResponse;
 import tn.entreprise.escproject.dto.RegisterRequest;
+import tn.entreprise.escproject.dto.UpdateOwnProfileRequest;
 import tn.entreprise.escproject.dto.UserResponse;
 import tn.entreprise.escproject.dto.UserSearchResult;
 import tn.entreprise.escproject.entite.User;
@@ -54,6 +55,14 @@ public class UserController {
             userServiceImp.setUserOffline(userDetails.getUsername());
         }
         return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateOwnProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdateOwnProfileRequest request) {
+        UserResponse response = userServiceImp.updateOwnProfile(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", response));
     }
 
     @GetMapping("/{id}")

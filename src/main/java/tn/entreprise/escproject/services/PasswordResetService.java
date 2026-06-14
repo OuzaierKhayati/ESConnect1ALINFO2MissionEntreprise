@@ -81,6 +81,26 @@ public class PasswordResetService {
     }
 
     /**
+     * Authenticated flow used by profile modal:
+     * validates current password then reuses the standard forgot-password workflow.
+     */
+    @Transactional
+    public void processAuthenticatedPasswordChangeRequest(String email, String currentPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("User account not found"));
+
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            throw new BadRequestException("Password change is not available for this account");
+        }
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        processForgotPassword(new ForgotPasswordRequest(email));
+    }
+
+    /**
      * Validate token and reset the user's password.
      */
     @Transactional

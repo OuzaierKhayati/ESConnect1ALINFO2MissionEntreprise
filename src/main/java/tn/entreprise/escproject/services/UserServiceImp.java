@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import tn.entreprise.escproject.dto.LoginRequest;
 import tn.entreprise.escproject.dto.LoginResponse;
 import tn.entreprise.escproject.dto.RegisterRequest;
+import tn.entreprise.escproject.dto.UpdateOwnProfileRequest;
 import tn.entreprise.escproject.dto.UserResponse;
 import tn.entreprise.escproject.dto.UserSearchResult;
 import tn.entreprise.escproject.entite.RoleUser;
@@ -238,5 +239,18 @@ public class UserServiceImp implements IService<User>, IUserService {
                     );
                 })
                 .collect(Collectors.toList());
+    }
+
+    public UserResponse updateOwnProfile(String email, UpdateOwnProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setDateOfBirth(request.getDateOfBirth());
+
+        userRepository.save(user);
+        log.info("Own profile updated for user: {}", email);
+        return convertToUserResponse(user);
     }
 }
