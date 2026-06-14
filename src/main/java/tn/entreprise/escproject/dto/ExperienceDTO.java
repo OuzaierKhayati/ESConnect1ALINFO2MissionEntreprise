@@ -26,6 +26,6 @@ public class ExperienceDTO {
     private String location;
     private LocalDate startDate;
     private LocalDate endDate;
-    private boolean currentlyWorking;
+    private Boolean currentlyWorking;
     private String description;
 }

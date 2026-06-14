@@ -26,7 +26,8 @@ public class FormationServiceImpl implements IFormationService {
 
 
     private FormationResponse toResponse(Formation f) {
-        long inscrits = inscriptionFormationRepository.countByFormationIdAndStatutNot(f.getId(), StatutInscription.ANNULE);
+        long inscrits = inscriptionFormationRepository.countByFormationIdAndStatutNot(f.getId(), StatutInscription.ANNULE)
+            - inscriptionFormationRepository.findByFormationIdAndStatut(f.getId(), StatutInscription.REJETE).size();
         long placesRestantes = 0;
         if (f.getCapaciteMax() != null) {
             placesRestantes = f.getCapaciteMax() - inscrits;

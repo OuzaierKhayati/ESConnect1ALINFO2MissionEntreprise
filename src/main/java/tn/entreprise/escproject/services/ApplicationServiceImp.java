@@ -81,6 +81,21 @@ public class ApplicationServiceImp implements IService<Application>, IApplicatio
     // ======== Business Methods ========
 
     public ApplicationResponse applyToJob(Long jobId, ApplicationRequest request, Long studentId) {
+        // ── Service-layer validation (defence-in-depth) ──────────────────────
+        if (request.getCoverLetter() == null || request.getCoverLetter().isBlank()) {
+            throw new BadRequestException("Cover letter is required");
+        }
+        if (request.getCoverLetter().strip().length() < 100) {
+            throw new BadRequestException("Cover letter must contain at least 100 characters");
+        }
+        if (request.getCvUrl() == null || request.getCvUrl().isBlank()) {
+            throw new BadRequestException("CV URL is required");
+        }
+        if (!request.getCvUrl().matches("^https?://.*")) {
+            throw new BadRequestException("Please provide a valid CV URL starting with https:// or http://");
+        }
+        // ────────────────────────────────────────────────────────────────────
+
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
 

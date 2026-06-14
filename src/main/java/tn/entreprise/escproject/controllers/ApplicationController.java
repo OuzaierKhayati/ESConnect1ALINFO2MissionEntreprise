@@ -13,6 +13,7 @@ import tn.entreprise.escproject.exception.ResourceNotFoundException;
 import tn.entreprise.escproject.repositories.UserRepository;
 import tn.entreprise.escproject.services.ApplicationServiceImp;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class ApplicationController {
     @PostMapping("/job/{jobId}")
     public ResponseEntity<ApiResponse<ApplicationResponse>> applyToJob(
             @PathVariable Long jobId,
-            @RequestBody ApplicationRequest request,
+            @Valid @RequestBody ApplicationRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = getCurrentUser(userDetails);
         ApplicationResponse response = applicationService.applyToJob(jobId, request, user.getId());

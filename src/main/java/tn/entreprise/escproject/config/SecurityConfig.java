@@ -88,7 +88,10 @@ public class SecurityConfig {
                         // Public endpoints (context path /escproject/api is already stripped by servlet container)
                         .requestMatchers(HttpMethod.POST, "/user/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
-                        .requestMatchers("/password/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/password/forgot").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/password/reset").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/password/validate-token").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/password/change-request").authenticated()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/login/oauth2/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
@@ -96,6 +99,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html").permitAll()
                         .requestMatchers("/chat/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
                         
                         // Protected endpoints - require ROLE_RECRUITER
                         .requestMatchers(HttpMethod.POST, "/jobs").hasRole("RECRUITER")
