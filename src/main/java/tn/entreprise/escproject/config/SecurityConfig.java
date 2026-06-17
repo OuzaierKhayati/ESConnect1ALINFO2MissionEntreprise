@@ -140,6 +140,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/connections/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/connections/**").permitAll()
                         
+                        // Facial recognition - public endpoints for authentication, profile check, and enrollment after registration
+                        .requestMatchers(HttpMethod.POST, "/facial/authenticate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/facial/check").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/facial/enroll").permitAll()
+                        // Facial deletion and reactivation still require authentication
+                        .requestMatchers(HttpMethod.GET, "/facial/me/status").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/facial/profile").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/facial/reactivate").authenticated()
+                        
                         // All other requests require authentication
                          .anyRequest().authenticated()
 //                        .anyRequest().permitAll()

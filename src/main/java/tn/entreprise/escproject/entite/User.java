@@ -171,4 +171,9 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<InscriptionFormation> inscriptions;
+
+    // Facial recognition profile (optional)
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private FacialProfile facialProfile;
 }
