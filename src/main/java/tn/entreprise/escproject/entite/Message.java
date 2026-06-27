@@ -38,4 +38,6 @@ public class Message {
     private String fileUrl;
 
     private String fileType;
+
+    private boolean flagged;
 }

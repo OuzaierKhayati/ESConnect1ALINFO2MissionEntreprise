@@ -170,6 +170,7 @@
 package tn.entreprise.escproject.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -179,15 +180,18 @@ import tn.entreprise.escproject.dto.GroupCreateRequest;
 import tn.entreprise.escproject.dto.GroupResponseDTO;
 import tn.entreprise.escproject.dto.MessageRequestDTO;
 import tn.entreprise.escproject.dto.MessageResponseDTO;
+import tn.entreprise.escproject.dto.MessageSendResponseDTO;
 import tn.entreprise.escproject.dto.NotificationDTO;
 import tn.entreprise.escproject.entite.ChatGroup;
 import tn.entreprise.escproject.entite.Message;
 import tn.entreprise.escproject.entite.User;
+import tn.entreprise.escproject.entite.UserStatus;
 import tn.entreprise.escproject.exception.BadRequestException;
 import tn.entreprise.escproject.exception.ResourceNotFoundException;
 import tn.entreprise.escproject.repositories.ChatGroupRepository;
 import tn.entreprise.escproject.repositories.MessageRepository;
 import tn.entreprise.escproject.repositories.UserRepository;
+import tn.entreprise.escproject.services.Interfaces.IAiService;
 import tn.entreprise.escproject.services.Interfaces.IMessageService;
 
 import java.time.LocalDateTime;
@@ -199,6 +203,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MessageServiceImp implements IMessageService {
 
     private final MessageRepository messageRepository;
@@ -208,6 +213,11 @@ public class MessageServiceImp implements IMessageService {
     private final ChatGroupRepository chatGroupRepository;
 
     private final SimpMessagingTemplate messagingTemplate;
+
+    private final IAiService aiService;
+
+    private static final double TOXICITY_THRESHOLD = 0.70;
+    private static final int MAX_WARNINGS = 3;
 
     @Override
     public Message createMessageEntity(MessageRequestDTO dto) {
@@ -242,8 +252,39 @@ public class MessageServiceImp implements IMessageService {
     }
 
     @Override
-    public MessageResponseDTO sendMessage(MessageRequestDTO dto) {
+    public MessageSendResponseDTO sendMessage(MessageRequestDTO dto) {
+        String content = dto.getContent();
+
+        // ── Toxicity check (skip for file-only or force-send) ──────────────
+        if (content != null && !content.isBlank() && !dto.isForceSend()) {
+            double score = aiService.checkToxicity(content);
+            if (score >= TOXICITY_THRESHOLD) {
+                return MessageSendResponseDTO.builder()
+                        .status("WARN")
+                        .warning("Your message may contain offensive language. Edit anyway?")
+                        .build();
+            }
+        }
+
+        // ── Build and persist the message ───────────────────────────────────
         Message savedMessage = createMessageEntity(dto);
+
+        if (dto.isForceSend()) {
+            savedMessage.setFlagged(true);
+            savedMessage = messageRepository.save(savedMessage);
+
+            // Increment sender's warning counter
+            User sender = savedMessage.getSender();
+            sender.setWarningCount(sender.getWarningCount() + 1);
+            log.info("User {} warning count: {}", sender.getId(), sender.getWarningCount());
+
+            if (sender.getWarningCount() >= MAX_WARNINGS) {
+                sender.setUserStatus(UserStatus.BLOCKED);
+                log.warn("User {} has been BLOCKED after {} warnings", sender.getId(), MAX_WARNINGS);
+            }
+            userRepository.save(sender);
+        }
+
         MessageResponseDTO response = mapToDTO(savedMessage);
 
         if (savedMessage.getGroup() != null) {
@@ -252,7 +293,10 @@ public class MessageServiceImp implements IMessageService {
             broadcastDirectMessage(savedMessage, response);
         }
 
-        return response;
+        return MessageSendResponseDTO.builder()
+                .status("SENT")
+                .data(response)
+                .build();
     }
 
     @Override
@@ -418,6 +462,7 @@ public class MessageServiceImp implements IMessageService {
                 .isRead(message.isRead())
                 .sentAt(message.getSentAt())
                 .groupId(message.getGroup() != null ? message.getGroup().getId() : null)
+                .flagged(message.isFlagged())
                 .build();
     }
 

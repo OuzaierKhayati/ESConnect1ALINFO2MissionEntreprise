@@ -130,6 +130,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/profile/me/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/profile/me/**").authenticated()
 
+                        // AI endpoints
+                        .requestMatchers("/ai/**").permitAll()
+
                         // Allow messages and connections
                         .requestMatchers(HttpMethod.POST, "/messages/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/messages/**").permitAll()

@@ -157,6 +157,7 @@ import tn.entreprise.escproject.dto.GroupCreateRequest;
 import tn.entreprise.escproject.dto.GroupResponseDTO;
 import tn.entreprise.escproject.dto.MessageRequestDTO;
 import tn.entreprise.escproject.dto.MessageResponseDTO;
+import tn.entreprise.escproject.dto.MessageSendResponseDTO;
 
 import tn.entreprise.escproject.entite.Message;
 
@@ -179,7 +180,7 @@ public class MessageController {
     // =========================================================
 
     @PostMapping
-    public MessageResponseDTO sendMessage(
+    public MessageSendResponseDTO sendMessage(
 
             @Valid
             @RequestBody

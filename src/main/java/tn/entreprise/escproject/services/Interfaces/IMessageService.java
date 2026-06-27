@@ -26,13 +26,14 @@ import tn.entreprise.escproject.dto.GroupCreateRequest;
 import tn.entreprise.escproject.dto.GroupResponseDTO;
 import tn.entreprise.escproject.dto.MessageRequestDTO;
 import tn.entreprise.escproject.dto.MessageResponseDTO;
+import tn.entreprise.escproject.dto.MessageSendResponseDTO;
 import tn.entreprise.escproject.entite.Message;
 
 import java.util.List;
 
 public interface IMessageService {
 
-    MessageResponseDTO sendMessage(MessageRequestDTO dto);
+    MessageSendResponseDTO sendMessage(MessageRequestDTO dto);
 
     Page<MessageResponseDTO> getConversation(Long user1, Long user2, int page, int size);
 

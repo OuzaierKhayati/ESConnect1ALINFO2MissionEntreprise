@@ -30,4 +30,6 @@ public class MessageResponseDTO {
     private LocalDateTime sentAt;
 
     private Long groupId;
+
+    private boolean flagged;
 }

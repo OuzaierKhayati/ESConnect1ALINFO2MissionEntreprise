@@ -16,4 +16,6 @@ public class MessageRequestDTO {
 
     @NotBlank
     private String content;
+
+    private boolean forceSend;
 }

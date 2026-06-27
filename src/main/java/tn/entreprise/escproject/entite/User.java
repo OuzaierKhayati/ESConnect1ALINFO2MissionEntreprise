@@ -109,6 +109,8 @@ public class User {
 
     private Boolean online = false;
 
+    private int warningCount = 0;
+
     public boolean isOnline() {
         return Boolean.TRUE.equals(online);
     }
