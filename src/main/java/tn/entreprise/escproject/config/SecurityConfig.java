@@ -143,6 +143,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/connections/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/connections/**").permitAll()
                         
+                        // Posts — any authenticated user
+                        .requestMatchers(HttpMethod.GET, "/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/posts/**").authenticated()
+
+                        // Events — any authenticated user
+                        .requestMatchers(HttpMethod.GET, "/events/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/events/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/events/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/events/**").authenticated()
+
                         // Facial recognition - public endpoints for authentication, profile check, and enrollment after registration
                         .requestMatchers(HttpMethod.POST, "/facial/authenticate").permitAll()
                         .requestMatchers(HttpMethod.GET, "/facial/check").permitAll()
