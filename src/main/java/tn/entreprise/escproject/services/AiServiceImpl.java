@@ -21,14 +21,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AiServiceImpl implements IAiService {
 
-    @Value("${ai.gemini.api-key}")
-    private String geminiApiKey;
+    @Value("${ai.groq.api-key}")
+    private String groqApiKey;
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
+    private static final String GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+    private static final String GROQ_MODEL = "llama-3.1-8b-instant";
 
     // =========================================================
     // LOCAL KEYWORD-BASED TOXICITY FILTER
@@ -36,6 +36,11 @@ public class AiServiceImpl implements IAiService {
     // =========================================================
 
     private static final Set<String> BLOCKLIST = new HashSet<>(Arrays.asList(
+            //
+            //-------------------------------
+            // To anyone reading this, we sincerely apologize for the inappropriate words in the code.
+            //--------------------------------
+            //
         // English
         "fuck", "f**k", "fck", "fucker", "fucking", "fucked", "fuk", "fvck",
         "shit", "sh*t", "shitty", "bullshit",
@@ -119,11 +124,11 @@ public class AiServiceImpl implements IAiService {
             Conversation:
             """ + conversationText;
 
-        return callGemini(prompt);
+        return callAi(prompt);
     }
 
     // =========================================================
-    // SMART REPLIES (Gemini API)
+    // SMART REPLIES (Groq API)
     // =========================================================
 
     @Override
@@ -139,7 +144,7 @@ public class AiServiceImpl implements IAiService {
             Example: ["Sure, sounds good!", "Let me check", "I'll get back to you"]
             """.formatted(lastMessage);
 
-        String raw = callGemini(prompt);
+        String raw = callAi(prompt);
         return parseSmartReplies(raw);
     }
 
@@ -147,24 +152,22 @@ public class AiServiceImpl implements IAiService {
     // PRIVATE HELPERS
     // =========================================================
 
-    private String callGemini(String prompt) {
+    private String callAi(String prompt) {
         try {
-            Map<String, Object> part = Map.of("text", prompt);
-            Map<String, Object> content = Map.of("parts", List.of(part));
-            Map<String, Object> genConfig = Map.of(
-                "temperature", 0.3,
-                "maxOutputTokens", 512
-            );
+            Map<String, Object> message = Map.of("role", "user", "content", prompt);
             Map<String, Object> body = Map.of(
-                "contents", List.of(content),
-                "generationConfig", genConfig
+                "model", GROQ_MODEL,
+                "messages", List.of(message),
+                "max_tokens", 512,
+                "temperature", 0.3
             );
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(groqApiKey);
 
             ResponseEntity<String> response = restTemplate.exchange(
-                GEMINI_URL + geminiApiKey,
+                GROQ_URL,
                 HttpMethod.POST,
                 new HttpEntity<>(body, headers),
                 String.class
@@ -172,25 +175,23 @@ public class AiServiceImpl implements IAiService {
 
             JsonNode root = objectMapper.readTree(response.getBody());
             String text = root
-                .path("candidates")
+                .path("choices")
                 .get(0)
+                .path("message")
                 .path("content")
-                .path("parts")
-                .get(0)
-                .path("text")
                 .asText(null);
 
             if (text == null || text.isBlank()) {
-                log.warn("Gemini returned empty response. Full body: {}", response.getBody());
+                log.warn("Groq returned empty response. Full body: {}", response.getBody());
                 return "Unable to generate response.";
             }
             return text;
 
         } catch (HttpClientErrorException e) {
-            log.error("Gemini API HTTP error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Groq API HTTP error {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
             return "AI service unavailable (check API key).";
         } catch (Exception e) {
-            log.error("Gemini API call failed: {}", e.getMessage());
+            log.error("Groq API call failed: {}", e.getMessage());
             return "Unable to generate response.";
         }
     }
