@@ -56,6 +56,14 @@ public class PostController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Post deleted", null));
     }
 
+    @GetMapping("/feed")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getRecommendedFeed(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = getCurrentUser(userDetails);
+        List<PostResponse> posts = postService.getRecommendedFeed(user.getId());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Feed retrieved", posts));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<PostResponse>>> getAllPosts(
             @AuthenticationPrincipal UserDetails userDetails) {

@@ -17,8 +17,8 @@ import tn.entreprise.escproject.repositories.UserRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,6 +111,124 @@ public class PostServiceImp {
     public PostResponse getPostById(Long postId, Long currentUserId) {
         return toResponse(findPostOrThrow(postId), currentUserId);
     }
+
+    // ======== Recommended Feed ========
+
+    private static final double GRAVITY = 1.5;
+    private static final int FEED_SIZE = 50;
+    private static final int MAX_POSTS_PER_AUTHOR = 5;
+    private static final int AFFINITY_WINDOW_DAYS = 30;
+
+    @Transactional(readOnly = true)
+    public List<PostResponse> getRecommendedFeed(Long userId) {
+        List<Post> allPosts = postRepository.findAllByOrderByCreatedAtDesc();
+
+        // One query: share counts for all posts
+        Map<Long, Long> shareCounts = buildShareCountMap();
+
+        // One query each: author affinity signals from last 30 days
+        LocalDateTime since = LocalDateTime.now().minusDays(AFFINITY_WINDOW_DAYS);
+        Set<Long> affinityAuthorIds = new HashSet<>(postRepository.findAuthorIdsLikedByUser(userId, since));
+        affinityAuthorIds.addAll(postCommentRepository.findAuthorIdsCommentedByUser(userId, since));
+
+        // One query: which posts has the current user already shared?
+        Set<Long> sharedByUser = postRepository.findOriginalPostIdsSharedByUser(userId);
+
+        // Score every post
+        List<ScoredPost> scored = allPosts.stream()
+                .map(p -> new ScoredPost(p, computeScore(p, shareCounts, affinityAuthorIds)))
+                .sorted(Comparator.comparingDouble(ScoredPost::score).reversed())
+                .collect(Collectors.toList());
+
+        // Author diversity: cap MAX_POSTS_PER_AUTHOR per author in the feed
+        Map<Long, Integer> authorCount = new HashMap<>();
+        List<Post> deferred = new ArrayList<>();
+        List<Post> feed = new ArrayList<>();
+
+        for (ScoredPost sp : scored) {
+            Long authorId = sp.post().getAuthor() != null ? sp.post().getAuthor().getId() : null;
+            int count = authorCount.getOrDefault(authorId, 0);
+            if (count < MAX_POSTS_PER_AUTHOR) {
+                feed.add(sp.post());
+                authorCount.put(authorId, count + 1);
+            } else {
+                deferred.add(sp.post());
+            }
+        }
+        feed.addAll(deferred);
+
+        return feed.stream()
+                .limit(FEED_SIZE)
+                .map(p -> buildFeedResponse(p, userId, shareCounts, sharedByUser))
+                .collect(Collectors.toList());
+    }
+
+    private Map<Long, Long> buildShareCountMap() {
+        Map<Long, Long> map = new HashMap<>();
+        for (Object[] row : postRepository.countSharesByPost()) {
+            Long postId = (Long) row[0];
+            Long count  = (Long) row[1];
+            map.put(postId, count);
+        }
+        return map;
+    }
+
+    private double computeScore(Post post, Map<Long, Long> shareCounts, Set<Long> affinityAuthorIds) {
+        double likes    = post.getLikedBy()  != null ? post.getLikedBy().size()  : 0;
+        double comments = post.getComments() != null ? post.getComments().size() : 0;
+        double shares   = shareCounts.getOrDefault(post.getId(), 0L);
+
+        double engagement = likes + comments * 2.0 + shares * 3.0 + 1.0;
+
+        long hoursSince = post.getCreatedAt() != null
+                ? ChronoUnit.HOURS.between(post.getCreatedAt(), LocalDateTime.now())
+                : 0;
+        double decay = Math.pow(Math.max(hoursSince, 0) + 2, GRAVITY);
+
+        double score = engagement / decay;
+
+        if (post.getAuthor() != null && affinityAuthorIds.contains(post.getAuthor().getId())) {
+            score *= 1.5;
+        }
+        if (post.getMediaUrls() != null && !post.getMediaUrls().isEmpty()) {
+            score *= 1.1;
+        }
+        return score;
+    }
+
+    private PostResponse buildFeedResponse(Post post, Long userId,
+                                           Map<Long, Long> shareCounts, Set<Long> sharedByUser) {
+        List<User> likedBy  = post.getLikedBy()  != null ? new ArrayList<>(post.getLikedBy())  : List.of();
+        List<PostComment> comments = post.getComments() != null ? new ArrayList<>(post.getComments()) : List.of();
+
+        long shareCount = shareCounts.getOrDefault(post.getId(), 0L);
+        boolean liked   = userId != null && likedBy.stream().anyMatch(u -> u.getId().equals(userId));
+        boolean shared  = sharedByUser.contains(post.getId());
+
+        PostResponse.PostResponseBuilder builder = PostResponse.builder()
+                .id(post.getId())
+                .authorId(post.getAuthor() != null ? post.getAuthor().getId() : null)
+                .authorName(post.getAuthor() != null ? post.getAuthor().getFirstName() + " " + post.getAuthor().getLastName() : null)
+                .authorRole(post.getAuthor() != null && post.getAuthor().getRoleUser() != null ? post.getAuthor().getRoleUser().toString() : null)
+                .authorProfilePictureUrl(post.getAuthor() != null && post.getAuthor().getProfile() != null ? post.getAuthor().getProfile().getProfilePictureUrl() : null)
+                .content(post.getContent())
+                .mediaUrls(new ArrayList<>(post.getMediaUrls()))
+                .createdAt(post.getCreatedAt())
+                .likeCount(likedBy.size())
+                .commentCount(comments.size())
+                .shareCount(shareCount)
+                .likedByCurrentUser(liked)
+                .sharedByCurrentUser(shared)
+                .isShare(post.getOriginalPost() != null)
+                .shareText(post.getShareText());
+
+        if (post.getOriginalPost() != null) {
+            builder.originalPost(toOriginalPostResponse(post.getOriginalPost()));
+        }
+        return builder.build();
+    }
+
+    private record ScoredPost(Post post, double score) {}
 
     // ======== Media Upload ========
 
